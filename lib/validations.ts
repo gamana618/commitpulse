@@ -183,14 +183,11 @@ export const streakParamsSchema = z.object({
   repo: z.string().optional(),
   org: z
     .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val) return true;
-        return /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9]))*$/.test(val);
-      },
-      { message: 'Invalid organization name format' }
-    ),
+    .max(39, { message: 'Organization name cannot exceed 39 characters' })
+    .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9]))*$/, {
+      message: 'Invalid organization name format',
+    })
+    .optional(),
   labels: z.string().optional().transform(toBooleanFlag),
   labelColor: z
     .string()
