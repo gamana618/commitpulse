@@ -7,9 +7,20 @@ describe('ThemeSwitch Type Compiler Validation', () => {
       'circle' | 'rectangle' | 'gif' | 'polygon' | 'circle-blur'
     >();
   });
-
-  it('validates AnimationStart type', () => {
-    expectTypeOf<AnimationStart>().toBeString();
+  it('validates AnimationStart union values', () => {
+    expectTypeOf<AnimationStart>().toEqualTypeOf<
+      | 'top-left'
+      | 'top-right'
+      | 'bottom-left'
+      | 'bottom-right'
+      | 'center'
+      | 'top-center'
+      | 'bottom-center'
+      | 'bottom-up'
+      | 'top-down'
+      | 'left-right'
+      | 'right-left'
+    >();
   });
 
   it('ensures createAnimation returns required structure', () => {
@@ -34,5 +45,13 @@ describe('ThemeSwitch Type Compiler Validation', () => {
 
     expectTypeOf(animation.name).toBeString();
     expectTypeOf(animation.css).toBeString();
+  });
+  it('returns an animation object with name and css strings', () => {
+    const result = createAnimation('circle', 'center');
+
+    expectTypeOf(result).toMatchTypeOf<{
+      name: string;
+      css: string;
+    }>();
   });
 });
