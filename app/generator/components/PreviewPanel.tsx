@@ -8,7 +8,7 @@ interface PreviewPanelProps {
 }
 
 function renderPreview(md: string): string {
-  let html = md
+  const html = md
     .replace(/^(#{1,6})\s+(.+)$/gm, (_, hashes: string, text: string) => {
       const level = hashes.length;
       const sizes: Record<number, string> = {
