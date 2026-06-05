@@ -41,7 +41,6 @@ import {
   CalendarDays,
   Tent,
   Camera,
-  Share2,
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
