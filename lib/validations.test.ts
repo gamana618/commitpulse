@@ -1477,13 +1477,11 @@ describe('streakParamsSchema — layout query validation boundaries (Variation 4
 
 describe('streakParamsSchema — date query validation boundaries (Variation 2)', () => {
   it('rejects the invalid date "2026-15-40" and returns an error containing \'Invalid "date" format\'', () => {
-    // Arrange: month 15 and day 40 are both out of range — clearly not ISO 8601
     const result = streakParamsSchema.safeParse({
       user: 'octocat',
       date: '2026-15-40',
     });
 
-    // Assert: schema must reject malformed date
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((i) => i.message).join(' ');
@@ -1595,5 +1593,44 @@ describe('toGraceValue and toOpacityValue — consistent parseFloat behavior', (
     expect(toOpacityValue('100')).toBe(1.0);
     expect(toGraceValue('-5')).toBe(0);
     expect(toOpacityValue('-5')).toBe(0.1);
+  });
+});
+
+describe('streakParamsSchema — user maxLength boundary (Variation 5)', () => {
+  it('rejects a user parameter of exactly 40 characters with a 400-style error containing "cannot exceed 39 characters"', () => {
+    const result = streakParamsSchema.safeParse({ user: 'a'.repeat(40) });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const message = result.error.issues[0]?.message ?? '';
+      expect(message).toContain('cannot exceed 39 characters');
+    }
+  });
+
+  it('accepts a username of exactly 39 characters (boundary value)', () => {
+    const result = streakParamsSchema.safeParse({ user: 'a'.repeat(39) });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a username longer than 39 characters even when the format is otherwise valid', () => {
+    const result = streakParamsSchema.safeParse({ user: 'b'.repeat(40) });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const message = result.error.issues[0]?.message ?? '';
+      expect(message).toContain('cannot exceed 39 characters');
+    }
+  });
+
+  it('returns a structured Zod error with fieldErrors.user pointing to the maxLength violation', () => {
+    const result = streakParamsSchema.safeParse({ user: 'a'.repeat(40) });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const flatErrors = result.error.flatten().fieldErrors;
+      expect(flatErrors.user).toBeDefined();
+      expect(flatErrors.user?.[0]).toContain('cannot exceed 39 characters');
+    }
   });
 });

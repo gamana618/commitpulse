@@ -1747,10 +1747,8 @@ describe('GET /api/streak', () => {
 
   describe('date parameter validation (Variation 2)', () => {
     it('returns 400 Bad Request when ?date= is "2026-15-40" (malformed ISO 8601)', async () => {
-      // Arrange: month 15 and day 40 are both impossible calendar values
       const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
 
-      // Assert: endpoint must reject before calling GitHub API
       expect(response.status).toBe(400);
     });
 
@@ -1787,6 +1785,47 @@ describe('GET /api/streak', () => {
       const response = await GET(makeRequest({ user: 'octocat', date: '2026-05-30' }));
 
       expect(response.status).toBe(200);
+    });
+  });
+
+  describe('user parameter maxLength validation (Variation 5)', () => {
+    it('returns 400 Bad Request when ?user= is exactly 40 characters long', async () => {
+      const response = await GET(makeRequest({ user: 'a'.repeat(40) }));
+
+      expect(response.status).toBe(400);
+    });
+
+    it('returns an error body containing "cannot exceed 39 characters" for a 40-char username', async () => {
+      const response = await GET(makeRequest({ user: 'a'.repeat(40) }));
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.error).toBe('Invalid parameters');
+      expect(JSON.stringify(body)).toContain('cannot exceed 39 characters');
+    });
+
+    it('does not call fetchGitHubContributions when the username exceeds 39 characters', async () => {
+      await GET(makeRequest({ user: 'a'.repeat(40) }));
+
+      expect(fetchGitHubContributions).not.toHaveBeenCalled();
+    });
+
+    it('returns 200 OK for a valid username at the 39-character boundary', async () => {
+      const response = await GET(makeRequest({ user: 'a'.repeat(39) }));
+
+      expect(response.status).toBe(200);
+    });
+
+    it('returns 400 and fieldErrors.user with maxLength message when using NextRequest with 40-char username', async () => {
+      const url = `http://localhost/api/streak?user=${'a'.repeat(40)}`;
+      const request = new NextRequest(url);
+
+      const response = await GET(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.error).toBe('Invalid parameters');
+      expect(body.details.fieldErrors.user[0]).toMatch(/cannot exceed 39 characters/);
     });
   });
 });
